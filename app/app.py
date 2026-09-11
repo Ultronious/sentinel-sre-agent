@@ -40,3 +40,16 @@ def inject_latency(seconds: int = 5):
 @app.get("/admin/inject-errors")
 def inject_errors():
     raise RuntimeError("Deliberate Sentinel test failure")
+
+app = FastAPI()
+
+
+@app.get("/health")
+def health():
+    return {"status": "healthy"}
+
+
+@app.get("/slow")
+def slow():
+    time.sleep(2)
+    return {"status": "slow"}
