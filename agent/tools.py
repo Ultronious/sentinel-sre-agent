@@ -46,9 +46,10 @@ def get_alarm_state() -> dict:
         "updated": alarm["StateUpdatedTimestamp"],
     }
 @tool
-def get_metrics(minutes: int = 15) -> dict:
+def get_metrics(minutes: int = 60) -> dict:
     """
-    Get recent ALB TargetResponseTime observations for the Sentinel demo.
+    Get ALB TargetResponseTime observations for the Sentinel demo
+    over a historical investigation window.
     """
     end_time = datetime.now(timezone.utc)
     start_time = end_time - timedelta(minutes=minutes)
@@ -77,7 +78,9 @@ def get_metrics(minutes: int = 15) -> dict:
         "status": "success",
         "metric": "TargetResponseTime",
         "unit": "Seconds",
+        "window_minutes": minutes,
         "period_seconds": 60,
+        "datapoint_count": len(datapoints),
         "datapoints": [
             {
                 "timestamp": point["Timestamp"].isoformat(),
