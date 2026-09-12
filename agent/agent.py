@@ -3,7 +3,7 @@ import os
 from strands import Agent
 from strands.models.openai import OpenAIModel
 
-from tools import get_alarm_state
+from tools import get_alarm_state,get_metrics
 
 
 SYSTEM_PROMPT = """
@@ -32,19 +32,32 @@ model = OpenAIModel(
 agent = Agent(
     model=model,
     system_prompt=SYSTEM_PROMPT,
-    tools=[get_alarm_state],
+    tools=[get_alarm_state, get_metrics],
 )
 
 
 if __name__ == "__main__":
     response = agent(
         """
-        Investigate the current Sentinel incident.
+Investigate the current Sentinel incident.
 
-        First determine whether the high-latency alarm is currently firing.
-        Report what you actually observe.
-        Do not assume the cause.
-        """
+Investigation procedure:
+1. Check the current high-latency alarm state.
+2. Retrieve recent TargetResponseTime metrics.
+3. Compare the observed metric values with the alarm threshold.
+4. Clearly distinguish observed facts from hypotheses.
+5. Do not invent a root cause.
+6. If the available evidence is insufficient to determine the cause, say so.
+7. Do not perform remediation.
+
+Report:
+- Alarm state
+- Relevant metric observations
+- What those observations establish
+- What they do NOT establish
+- Recommended next investigation step
+"""
+
     )
 
     print(response)
