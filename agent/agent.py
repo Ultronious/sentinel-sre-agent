@@ -3,7 +3,8 @@ import os
 from strands import Agent
 from strands.models.openai import OpenAIModel
 
-from tools import get_alarm_state,get_metrics
+from tools import (get_alarm_state,get_metrics,query_logs,
+    inspect_ecs_task,)
 
 
 SYSTEM_PROMPT = """
@@ -32,7 +33,7 @@ model = OpenAIModel(
 agent = Agent(
     model=model,
     system_prompt=SYSTEM_PROMPT,
-    tools=[get_alarm_state, get_metrics],
+    tools=[get_alarm_state, get_metrics, query_logs, inspect_ecs_task],
 )
 
 
