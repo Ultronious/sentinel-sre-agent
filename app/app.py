@@ -1,8 +1,35 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 import time
 import random
+import logging
 
 app = FastAPI(title="Sentinel Demo Service")
+
+logger = logging.getLogger("sentinel")
+logging.basicConfig(level=logging.INFO)
+
+
+@app.middleware("http")
+async def request_timing(request: Request, call_next):
+    start = time.perf_counter()
+
+    response = await call_next(request)
+
+    duration_ms = (time.perf_counter() - start) * 1000
+
+    logger.info(
+        "REQUEST_TELEMETRY "
+        "method=%s "
+        "path=%s "
+        "status=%s "
+        "duration_ms=%.2f",
+        request.method,
+        request.url.path,
+        response.status_code,
+        duration_ms,
+    )
+
+    return response
 
 
 @app.get("/health")
@@ -41,15 +68,23 @@ def inject_latency(seconds: int = 5):
 def inject_errors():
     raise RuntimeError("Deliberate Sentinel test failure")
 
-app = FastAPI()
-
-
-@app.get("/health")
-def health():
-    return {"status": "healthy"}
-
 
 @app.get("/slow")
 def slow():
     time.sleep(2)
-    return {"status": "slow"}
+
+    return {
+        "status": "slow"
+    }
+
+
+@app.get("/cpu")
+def cpu():
+    end = time.perf_counter() + 5
+
+    while time.perf_counter() < end:
+        pass
+
+    return {
+        "status": "cpu-busy"
+    }
