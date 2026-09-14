@@ -5,7 +5,7 @@
     "expected": {
       "must_contain": [
         "11:51",
-        "2000.59",
+        "/slow",
         "2.001781",
         "correlat",
         "ROOT CAUSE: UNCONFIRMED"

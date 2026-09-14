@@ -28,6 +28,7 @@ Check specifically for:
 7. Endpoint behavior inferred only from path, method, name, or status code.
 8. Inconsistent timestamps or incident selection.
 9. Internal contradictions between the hypothesis and final conclusion.
+10. Unsupported statistical claims.
 
 A strong correlation is not proof of causation.
 
@@ -36,6 +37,12 @@ mark it as a violation.
 
 If evidence is missing, the report must say so rather than inventing
 a conclusion.
+
+Statistical terminology must not be presented as computed evidence unless
+the supplied evidence explicitly contains the relevant calculation or
+statistical test.
+
+Do not infer malicious intent from unusual traffic or endpoint behavior.
 
 OUTPUT FORMAT
 
@@ -120,6 +127,85 @@ UNSUPPORTED_ABSENCE_CLAIMS = [
 ]
 
 
+UNSUPPORTED_STATISTICAL_PATTERNS = [
+    "correlation coefficient",
+    "statistically significant",
+    "statistically insignificant",
+    "p-value",
+    "p value",
+    "confidence interval",
+]
+
+
+def deterministic_statistical_review(
+    report: str,
+) -> list[dict]:
+    """
+    Detect unsupported statistical claims.
+
+    Statistical terminology is only treated as a violation when the
+    report presents it as calculated evidence without clearly stating
+    that the calculation or test was not performed.
+    """
+
+    report_lower = report.lower()
+    issues = []
+
+    safe_context_markers = [
+        "not calculated",
+        "not performed",
+        "not computed",
+        "not available",
+        "cannot be assessed",
+        "cannot assess",
+        "not established",
+        "no statistical test",
+        "without a statistical test",
+        "insufficient evidence",
+        "not measured",
+        "not provided",
+    ]
+
+    for pattern in UNSUPPORTED_STATISTICAL_PATTERNS:
+        if pattern not in report_lower:
+            continue
+
+        pattern_index = report_lower.find(pattern)
+
+        start = max(
+            0,
+            pattern_index - 100,
+        )
+
+        end = min(
+            len(report_lower),
+            pattern_index + len(pattern) + 150,
+        )
+
+        context = report_lower[start:end]
+
+        if any(
+            marker in context
+            for marker in safe_context_markers
+        ):
+            continue
+
+        issues.append(
+            {
+                "type": "unsupported_statistical_claim",
+                "severity": "medium",
+                "claim": pattern,
+                "reason": (
+                    "The report uses statistical terminology without "
+                    "evidence that the corresponding calculation or "
+                    "statistical test was actually performed."
+                ),
+            }
+        )
+
+    return issues
+
+
 def deterministic_review(report: str) -> list[dict]:
     """
     Enforce hard evidence-discipline rules without relying on an LLM.
@@ -156,6 +242,10 @@ def deterministic_review(report: str) -> list[dict]:
                     ),
                 }
             )
+
+    issues.extend(
+        deterministic_statistical_review(report)
+    )
 
     return issues
 
