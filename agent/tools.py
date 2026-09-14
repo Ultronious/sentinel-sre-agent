@@ -1,8 +1,10 @@
 import boto3
-from strands import tool
 from datetime import datetime, timedelta, timezone
 import json
 import re
+
+from strands import tool
+
 
 logs = boto3.Session(
     profile_name="sentinel",
@@ -24,15 +26,23 @@ cloudtrail = boto3.Session(
     region_name="us-east-1",
 ).client("cloudtrail")
 
-@tool
-def get_alarm_history(hours: int = 24) -> dict:
-    """
-    Get recent state transitions for the Sentinel high-latency alarm.
 
-    The most recent OK -> ALARM transition is selected deterministically
-    as the primary incident. When CloudWatch history contains the
-    triggering metric datapoint timestamp, that timestamp is exposed as
-    incident_timestamp.
+def fetch_alarm_history(hours: int = 24) -> dict:
+    """
+    Deterministically retrieve and select the most recent
+    OK -> ALARM transition for Sentinel.
+
+    This is the reusable Python implementation.
+
+    Strands exposes the same capability through get_alarm_history().
+    Event-driven callers can use this function directly.
+
+    Returns:
+        A dictionary containing:
+        - status
+        - selected_incident
+        - history
+        - transition counts
     """
 
     end_time = datetime.now(timezone.utc)
@@ -52,7 +62,11 @@ def get_alarm_history(hours: int = 24) -> dict:
         history_data = item.get("HistoryData")
 
         try:
-            parsed_data = json.loads(history_data) if history_data else None
+            parsed_data = (
+                json.loads(history_data)
+                if history_data
+                else None
+            )
         except (TypeError, json.JSONDecodeError):
             parsed_data = None
 
@@ -67,78 +81,91 @@ def get_alarm_history(hours: int = 24) -> dict:
             }
         )
 
-    history.sort(key=lambda item: item["timestamp"])
+    history.sort(
+        key=lambda item: item["timestamp"]
+    )
 
-    # Identify actual OK -> ALARM transitions.
     alarm_transitions = []
 
     for item in history:
         summary = item["summary"].upper()
 
-        if "OK -> ALARM" in summary or "OK TO ALARM" in summary:
+        if (
+            "OK -> ALARM" in summary
+            or "OK TO ALARM" in summary
+        ):
             alarm_transitions.append(item)
 
-    selected_incident = None
+    if not alarm_transitions:
+        return {
+            "status": "no_incident",
+            "alarm_name": "sentinel-high-latency",
+            "window_hours": hours,
+            "history_count": len(history),
+            "alarm_transition_count": 0,
+            "selected_incident": None,
+            "history": history,
+            "message": (
+                "No OK -> ALARM transition was observed in the "
+                "queried alarm-history window."
+            ),
+        }
 
-    if alarm_transitions:
-        selected = alarm_transitions[-1]
+    selected = alarm_transitions[-1]
 
-        incident_timestamp = selected["timestamp"]
-        metric_value = None
-        threshold = None
-        sample_count = None
+    incident_timestamp = selected["timestamp"]
+    metric_value = None
+    threshold = None
+    sample_count = None
+    datapoint_timestamp = None
 
-        # CloudWatch alarm history commonly stores the triggering
-        # datapoint information inside state.reasonData.
-        data = selected.get("data") or {}
+    data = selected.get("data") or {}
 
-        new_state = data.get("newState") or {}
-        reason_data = new_state.get("stateReasonData")
+    new_state = data.get("newState") or {}
+    reason_data = new_state.get("stateReasonData")
 
-        if isinstance(reason_data, str):
-            try:
-                reason_data = json.loads(reason_data)
-            except (TypeError, json.JSONDecodeError):
-                reason_data = None
+    if isinstance(reason_data, str):
+        try:
+            reason_data = json.loads(reason_data)
+        except (TypeError, json.JSONDecodeError):
+            reason_data = None
 
-        if isinstance(reason_data, dict):
-            threshold = reason_data.get("threshold")
+    if isinstance(reason_data, dict):
+        threshold = reason_data.get("threshold")
 
-            recent_datapoints = reason_data.get("recentDatapoints") or []
+        recent_datapoints = (
+            reason_data.get("recentDatapoints") or []
+        )
 
-            if recent_datapoints:
-                metric_value = recent_datapoints[-1]
+        if recent_datapoints:
+            metric_value = recent_datapoints[-1]
 
-            evaluated_datapoints = (
-                reason_data.get("evaluatedDatapoints") or []
+        evaluated_datapoints = (
+            reason_data.get("evaluatedDatapoints") or []
+        )
+
+        if evaluated_datapoints:
+            triggering = evaluated_datapoints[-1]
+
+            if isinstance(triggering, dict):
+                metric_value = triggering.get(
+                    "value",
+                    metric_value,
+                )
+
+                sample_count = triggering.get(
+                    "sampleCount",
+                    sample_count,
+                )
+
+                datapoint_timestamp = triggering.get(
+                    "timestamp"
+                )
+
+        if sample_count is None:
+            sample_count = reason_data.get(
+                "sampleCount"
             )
-
-            if evaluated_datapoints:
-                triggering = evaluated_datapoints[-1]
-
-                if isinstance(triggering, dict):
-                    metric_value = triggering.get(
-                        "value",
-                        metric_value,
-                    )
-                    sample_count = triggering.get(
-                        "sampleCount",
-                        sample_count,
-                    )
-                    datapoint_timestamp = triggering.get("timestamp")
-
-                    if isinstance(triggering, dict):
-                        metric_value = triggering.get(
-                           "value",
-                             metric_value,
-                      )
-
-                        sample_count = triggering.get(
-                                  "sampleCount",
-                                   sample_count,
-                        )
-
-    datapoint_timestamp = triggering.get("timestamp")
 
     if datapoint_timestamp:
         try:
@@ -154,21 +181,20 @@ def get_alarm_history(hours: int = 24) -> dict:
                 .astimezone(timezone.utc)
                 .isoformat()
             )
-        except ValueError:
+
+        except (TypeError, ValueError):
             pass
 
-            sample_count = reason_data.get("sampleCount")
-
-        selected_incident = {
-            "timestamp": incident_timestamp,
-            "alarm_state_transition": "OK -> ALARM",
-            "alarm_state_change_timestamp": selected["timestamp"],
-            "metric": "TargetResponseTime",
-            "value": metric_value,
-            "threshold": threshold,
-            "sample_count": sample_count,
-            "history_summary": selected["summary"],
-        }
+    selected_incident = {
+        "timestamp": incident_timestamp,
+        "alarm_state_transition": "OK -> ALARM",
+        "alarm_state_change_timestamp": selected["timestamp"],
+        "metric": "TargetResponseTime",
+        "value": metric_value,
+        "threshold": threshold,
+        "sample_count": sample_count,
+        "history_summary": selected["summary"],
+    }
 
     return {
         "status": "success",
@@ -179,6 +205,17 @@ def get_alarm_history(hours: int = 24) -> dict:
         "selected_incident": selected_incident,
         "history": history,
     }
+
+
+@tool
+def get_alarm_history(hours: int = 24) -> dict:
+    """
+    Strands adapter around the deterministic alarm-history implementation.
+    """
+
+    return fetch_alarm_history(hours)
+
+
 @tool
 def get_alarm_state() -> dict:
     """
@@ -783,7 +820,6 @@ def get_ecs_metrics(
             "interpreted as normal or insignificant utilization."
         ),
     }
-@tool
 @tool
 def get_ecs_task_at_time(
     incident_time: str,
