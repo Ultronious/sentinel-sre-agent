@@ -4,3 +4,17 @@ __pycache__/
 .env
 .env.*
 !.env.example
+# Local AWS/Lambda test artifacts
+lambda-response.json
+eventbridge-test-entry.json
+event-pattern.json
+lambda-test-event.json
+lambda-execution-policy.json
+lambda-ecr-policy.json
+lambda-trust-policy.json
+credentials.py
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/

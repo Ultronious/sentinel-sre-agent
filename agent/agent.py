@@ -3,6 +3,7 @@ import os
 from strands import Agent
 from strands.models.openai import OpenAIModel
 
+from .credentials import get_openai_api_key
 from .tools import (
     get_alarm_history,
     get_alarm_state,
@@ -142,9 +143,11 @@ State what additional evidence would be required for validation.
 """
 
 
+
+
 model = OpenAIModel(
     client_args={
-        "api_key": os.environ["OPENAI_API_KEY"],
+        "api_key": get_openai_api_key(),
         "base_url": "https://bedrock-mantle.us-east-1.api.aws/v1",
     },
     model_id="zai.glm-5",
@@ -249,4 +252,8 @@ the causal mechanism.
 
 
 if __name__ == "__main__":
-    print(investigate(CLI_INVESTIGATION_PROMPT))
+    print(
+        investigate(
+            CLI_INVESTIGATION_PROMPT
+        )
+    )

@@ -1,3 +1,5 @@
+import os
+
 import boto3
 from datetime import datetime, timedelta, timezone
 import json
@@ -6,25 +8,33 @@ import re
 from strands import tool
 
 
-logs = boto3.Session(
-    profile_name="sentinel",
-    region_name="us-east-1",
-).client("logs")
+AWS_REGION = os.getenv(
+    "AWS_REGION",
+    os.getenv(
+        "AWS_DEFAULT_REGION",
+        "us-east-1",
+    ),
+)
 
-ecs = boto3.Session(
-    profile_name="sentinel",
-    region_name="us-east-1",
-).client("ecs")
+AWS_PROFILE = os.getenv("AWS_PROFILE")
 
-cloudwatch = boto3.Session(
-    profile_name="sentinel",
-    region_name="us-east-1",
-).client("cloudwatch")
+session_kwargs = {
+    "region_name": AWS_REGION,
+}
 
-cloudtrail = boto3.Session(
-    profile_name="sentinel",
-    region_name="us-east-1",
-).client("cloudtrail")
+if AWS_PROFILE:
+    session_kwargs["profile_name"] = AWS_PROFILE
+
+
+aws_session = boto3.Session(
+    **session_kwargs
+)
+
+
+logs = aws_session.client("logs")
+ecs = aws_session.client("ecs")
+cloudwatch = aws_session.client("cloudwatch")
+cloudtrail = aws_session.client("cloudtrail")
 
 
 def fetch_alarm_history(hours: int = 24) -> dict:

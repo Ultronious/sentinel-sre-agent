@@ -3,7 +3,7 @@ import os
 
 from strands import Agent
 from strands.models.openai import OpenAIModel
-
+from agent.credentials import get_openai_api_key
 
 REVIEWER_SYSTEM_PROMPT = """
 You are Sentinel Reviewer, an independent SRE report reviewer.
@@ -95,7 +95,7 @@ Use "REVISE" when one or more material issues are present.
 
 model = OpenAIModel(
     client_args={
-        "api_key": os.environ["OPENAI_API_KEY"],
+        "api_key": get_openai_api_key(),
         "base_url": "https://bedrock-mantle.us-east-1.api.aws/v1",
     },
     model_id="zai.glm-4.7-flash",
