@@ -1,0 +1,118 @@
+{
+  "incident_time": "2026-09-14T10:30:00+00:00",
+  "investigation_window": {
+    "start": "2026-09-14T10:25:00+00:00",
+    "end": "2026-09-14T10:35:00+00:00"
+  },
+  "alarm": {
+    "name": "sentinel-high-latency",
+    "state": "ALARM",
+    "selected_transition": "OK -> ALARM",
+    "transition_time": "2026-09-14T10:30:42+00:00",
+    "metric": "TargetResponseTime",
+    "threshold_seconds": 1.0,
+    "incident_value_seconds": 2.8,
+    "sample_count": 3
+  },
+  "alb_metrics": {
+    "TargetResponseTime": {
+      "unit": "Seconds",
+      "datapoints": [
+        {
+          "timestamp": "2026-09-14T10:29:00+00:00",
+          "average": 0.18
+        },
+        {
+          "timestamp": "2026-09-14T10:30:00+00:00",
+          "average": 2.8
+        },
+        {
+          "timestamp": "2026-09-14T10:31:00+00:00",
+          "average": 0.25
+        }
+      ]
+    }
+  },
+  "application_telemetry": {
+    "request_count": 15,
+    "min_duration_ms": 0.4,
+    "max_duration_ms": 2800.4,
+    "avg_duration_ms": 187.1,
+    "by_path": {
+      "/api": {
+        "count": 12,
+        "status_codes": {
+          "200": 12
+        },
+        "min_duration_ms": 0.4,
+        "max_duration_ms": 3.2,
+        "avg_duration_ms": 1.1
+      },
+      "/slow": {
+        "count": 3,
+        "status_codes": {
+          "200": 3
+        },
+        "min_duration_ms": 2750.1,
+        "max_duration_ms": 2800.4,
+        "avg_duration_ms": 2775.2
+      }
+    },
+    "coverage_warning": false
+  },
+  "ecs": {
+    "historical_task": {
+      "task_id": "historical-task-001",
+      "task_definition_family": "sentinel-demo",
+      "attribution_status": "inferred_from_container_insights",
+      "cpu_percent": {
+        "before": {
+          "timestamp": "2026-09-14T10:29:00+00:00",
+          "average": 20.0
+        },
+        "incident": {
+          "timestamp": "2026-09-14T10:30:00+00:00",
+          "average": 22.0
+        },
+        "after": {
+          "timestamp": "2026-09-14T10:31:00+00:00",
+          "average": 21.0
+        }
+      },
+      "memory_percent": {
+        "before": 38.0,
+        "incident": 38.5,
+        "after": 38.0
+      }
+    },
+    "current_task": {
+      "task_id": "current-task-999",
+      "status": "RUNNING",
+      "warning": "This task was not established as active during the historical incident."
+    }
+  },
+  "lifecycle": {
+    "historical_task_lifetime": {
+      "start": "2026-09-14T10:10:00+00:00",
+      "end": "2026-09-14T10:40:00+00:00"
+    },
+    "run_task_events": 0,
+    "stop_task_events": 0,
+    "interpretation": "No RunTask or StopTask events were observed in the queried window. This does not establish that no deployment, scaling, replacement, or configuration change occurred."
+  },
+  "expected_behavior": {
+    "root_cause_status": "UNCONFIRMED",
+    "must_contain": [
+      "historical-task-001",
+      "historical",
+      "Container Insights",
+      "10:30",
+      "ROOT CAUSE: UNCONFIRMED"
+    ],
+    "must_not_contain": [
+      "current-task-999 caused the incident",
+      "current-task-999 was the incident task",
+      "the currently running task was used because it is running"
+    ]
+  }
+}

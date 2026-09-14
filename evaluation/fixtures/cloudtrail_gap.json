@@ -1,0 +1,104 @@
+{
+  "incident_time": "2026-09-14T11:15:00+00:00",
+  "investigation_window": {
+    "start": "2026-09-14T11:10:00+00:00",
+    "end": "2026-09-14T11:20:00+00:00"
+  },
+  "alarm": {
+    "name": "sentinel-high-latency",
+    "state": "ALARM",
+    "selected_transition": "OK -> ALARM",
+    "transition_time": "2026-09-14T11:15:30+00:00",
+    "metric": "TargetResponseTime",
+    "threshold_seconds": 1.0,
+    "incident_value_seconds": 1.9,
+    "sample_count": 4
+  },
+  "alb_metrics": {
+    "TargetResponseTime": {
+      "unit": "Seconds",
+      "datapoints": [
+        {
+          "timestamp": "2026-09-14T11:14:00+00:00",
+          "average": 0.11
+        },
+        {
+          "timestamp": "2026-09-14T11:15:00+00:00",
+          "average": 1.9
+        },
+        {
+          "timestamp": "2026-09-14T11:16:00+00:00",
+          "average": 0.14
+        }
+      ]
+    }
+  },
+  "application_telemetry": {
+    "request_count": 4,
+    "min_duration_ms": 4.0,
+    "max_duration_ms": 1900.0,
+    "avg_duration_ms": 480.0,
+    "by_path": {
+      "/api": {
+        "count": 4,
+        "status_codes": {
+          "200": 4
+        },
+        "min_duration_ms": 4.0,
+        "max_duration_ms": 1900.0,
+        "avg_duration_ms": 480.0
+      }
+    },
+    "coverage_warning": false
+  },
+  "ecs": {
+    "task_id": "task-cloudtrail-gap-001",
+    "task_definition_family": "sentinel-demo",
+    "cluster": "sentinel-cluster",
+    "attribution_status": "inferred_from_container_insights",
+    "cpu_percent": {
+      "before": {
+        "timestamp": "2026-09-14T11:14:00+00:00",
+        "average": 12.0
+      },
+      "incident": {
+        "timestamp": "2026-09-14T11:15:00+00:00",
+        "average": 13.0
+      },
+      "after": {
+        "timestamp": "2026-09-14T11:16:00+00:00",
+        "average": 12.0
+      }
+    },
+    "memory_percent": {
+      "before": 30.0,
+      "incident": 30.5,
+      "after": 30.0
+    }
+  },
+  "lifecycle": {
+    "run_task_events": 0,
+    "stop_task_events": 0,
+    "queried_event_types": [
+      "RunTask",
+      "StopTask"
+    ],
+    "interpretation": "No RunTask or StopTask events were observed in the queried CloudTrail window. This only establishes that those queried event types were not observed in the selected window."
+  },
+  "expected_behavior": {
+    "root_cause_status": "UNCONFIRMED",
+    "must_contain": [
+      "not observed",
+      "does not prove",
+      "CloudTrail",
+      "ROOT CAUSE: UNCONFIRMED"
+    ],
+    "must_not_contain": [
+      "no deployment occurred",
+      "no deployment happened",
+      "no scaling occurred",
+      "no configuration change occurred",
+      "no task replacement occurred"
+    ]
+  }
+}

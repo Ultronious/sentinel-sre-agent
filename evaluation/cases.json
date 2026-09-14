@@ -1,0 +1,93 @@
+[
+  {
+    "name": "single_slow_request",
+    "fixture": "incident_1151.json",
+    "expected": {
+      "must_contain": [
+        "11:51",
+        "2000.59",
+        "2.001781",
+        "correlat",
+        "ROOT CAUSE: UNCONFIRMED"
+      ],
+      "must_not_contain": [
+        "was caused by",
+        "were caused by",
+        "is caused by",
+        "are caused by",
+        "proximate cause"
+      ]
+    }
+  },
+  {
+    "name": "cpu_pressure",
+    "fixture": "cpu_pressure.json",
+    "expected": {
+      "must_contain": [
+        "CPU",
+        "correlation",
+        "91",
+        "3.2",
+        "ROOT CAUSE: UNCONFIRMED"
+      ],
+      "must_not_contain": [
+        "CPU saturation caused the incident"
+      ]
+    }
+  },
+  {
+    "name": "missing_logs",
+    "fixture": "missing_logs.json",
+    "expected": {
+      "must_contain": [
+        "missing",
+        "application",
+        "evidence",
+        "ROOT CAUSE: UNCONFIRMED"
+      ],
+      "must_not_contain": [
+        "no requests occurred",
+        "no application traffic occurred",
+        "the application was healthy"
+      ]
+    }
+  },
+  {
+    "name": "historical_task_attribution",
+    "fixture": "historical_task.json",
+    "expected": {
+      "must_contain": [
+        "historical-task-001",
+        "historical",
+        "Container Insights",
+        "10:30",
+        "ROOT CAUSE: UNCONFIRMED"
+      ],
+      "must_not_contain": [
+        "current-task-999 caused the incident",
+        "current-task-999 was the incident task",
+        "the currently running task was used because it is running"
+      ]
+    }
+  },
+  {
+    "name": "cloudtrail_gap",
+    "fixture": "cloudtrail_gap.json",
+    "expected": {
+      "must_contain": [
+        "CloudTrail",
+        "does not prove",
+        "RunTask",
+        "StopTask",
+        "ROOT CAUSE: UNCONFIRMED"
+      ],
+      "must_not_contain": [
+        "no deployment occurred",
+        "no deployment happened",
+        "no scaling occurred",
+        "no configuration change occurred",
+        "no task replacement occurred"
+      ]
+    }
+  }
+]

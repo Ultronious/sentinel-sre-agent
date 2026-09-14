@@ -1,0 +1,140 @@
+{
+  "incident_time": "2026-09-13T11:51:00+00:00",
+  "investigation_window": {
+    "start": "2026-09-13T11:46:00+00:00",
+    "end": "2026-09-13T11:56:00+00:00"
+  },
+  "alarm": {
+    "name": "sentinel-high-latency",
+    "state": "OK",
+    "selected_transition": "OK -> ALARM",
+    "transition_time": "2026-09-13T11:54:47.709000+00:00",
+    "metric": "TargetResponseTime",
+    "threshold_seconds": 1.0,
+    "incident_value_seconds": 2.001781,
+    "sample_count": 1
+  },
+  "alarm_history": {
+    "transitions_24h": [
+      {
+        "incident_time": "2026-09-13T09:49:00+00:00",
+        "target_response_time_seconds": 5.068213,
+        "sample_count": 1
+      },
+      {
+        "incident_time": "2026-09-13T10:14:00+00:00",
+        "target_response_time_seconds": 10.4283609,
+        "sample_count": 40
+      },
+      {
+        "incident_time": "2026-09-13T11:35:00+00:00",
+        "target_response_time_seconds": 2.5274995,
+        "sample_count": 2
+      },
+      {
+        "incident_time": "2026-09-13T11:44:00+00:00",
+        "target_response_time_seconds": 2.335166,
+        "sample_count": 3
+      },
+      {
+        "incident_time": "2026-09-13T11:51:00+00:00",
+        "target_response_time_seconds": 2.001781,
+        "sample_count": 1
+      }
+    ]
+  },
+  "alb_metrics": {
+    "TargetResponseTime": {
+      "unit": "Seconds",
+      "datapoints": [
+        {
+          "timestamp": "2026-09-13T11:47:00+00:00",
+          "average": 0.001495
+        },
+        {
+          "timestamp": "2026-09-13T11:51:00+00:00",
+          "average": 2.001781
+        }
+      ]
+    }
+  },
+  "application_telemetry": {
+    "request_count": 42,
+    "min_duration_ms": 0.29,
+    "max_duration_ms": 2000.59,
+    "avg_duration_ms": 48.06,
+    "by_path": {
+      "/health": {
+        "count": 40,
+        "status_codes": {
+          "200": 40
+        },
+        "min_duration_ms": 0.32,
+        "max_duration_ms": 0.62,
+        "avg_duration_ms": 0.44
+      },
+      "/admin/config.php": {
+        "count": 1,
+        "status_codes": {
+          "404": 1
+        },
+        "min_duration_ms": 0.29,
+        "max_duration_ms": 0.29,
+        "avg_duration_ms": 0.29
+      },
+      "/slow": {
+        "count": 1,
+        "status_codes": {
+          "200": 1
+        },
+        "min_duration_ms": 2000.59,
+        "max_duration_ms": 2000.59,
+        "avg_duration_ms": 2000.59
+      }
+    },
+    "coverage_warning": false
+  },
+  "ecs": {
+    "task_id": "e7e686ca2ce24f29a98c35e85b3bbf06",
+    "task_definition_family": "sentinel-demo",
+    "cluster": "sentinel-cluster",
+    "attribution_status": "inferred_from_container_insights",
+    "cpu_percent": {
+      "before": {
+        "timestamp": "2026-09-13T11:50:00+00:00",
+        "average": 0.235
+      },
+      "incident": {
+        "timestamp": "2026-09-13T11:51:00+00:00",
+        "average": 0.265
+      },
+      "after": {
+        "timestamp": "2026-09-13T11:52:00+00:00",
+        "average": 0.234
+      }
+    },
+    "memory_percent": {
+      "before": 6.64,
+      "incident": 6.64,
+      "after": 6.64
+    }
+  },
+  "lifecycle": {
+    "run_task_events": 0,
+    "stop_task_events": 0,
+    "interpretation": "No RunTask or StopTask events were observed in the queried window. This does not establish that no deployment, scaling, replacement, or configuration change occurred."
+  },
+  "expected_behavior": {
+    "incident_timestamp": "2026-09-13T11:51:00+00:00",
+    "root_cause_status": "UNCONFIRMED",
+    "strongest_correlated_factor": "/slow request",
+    "must_not_claim": [
+      "The /slow endpoint is proven to have caused the incident.",
+      "The /slow endpoint is intentionally designed to be slow.",
+      "CPU saturation occurred.",
+      "Memory pressure occurred.",
+      "No deployment or scaling change occurred.",
+      "The current running task is necessarily the incident-serving task."
+    ]
+  }
+}
