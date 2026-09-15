@@ -222,6 +222,28 @@ def handle_event(event: dict) -> dict:
     history_result = _get_selected_incident_with_retry()
 
     if history_result.get("status") != "success":
+        slack_status = "not_attempted"
+
+        try:
+            send_slack_message(
+                "🚨 Sentinel Investigation\n\n"
+                f"Alarm: {alarm_name}\n"
+                f"Event: {event_id}\n\n"
+                "Status: BLOCKED\n"
+                "No canonical incident was identified from "
+                "alarm history after bounded retries.\n\n"
+                "Sentinel did not invent an incident timestamp."
+            )
+            slack_status = "delivered"
+
+        except Exception as exc:
+            slack_status = "failed"
+
+            print(
+                "Slack notification failed: "
+                f"{type(exc).__name__}: {exc}"
+            )
+
         return {
             **base_result,
             "status": "blocked",
@@ -236,6 +258,7 @@ def handle_event(event: dict) -> dict:
             "incident": None,
             "report": None,
             "history_result": history_result,
+            "slack_status": slack_status,
         }
 
     selected_incident = history_result.get(
