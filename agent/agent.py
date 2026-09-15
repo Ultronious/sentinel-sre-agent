@@ -3,16 +3,17 @@ import os
 from strands import Agent
 from strands.models.openai import OpenAIModel
 
-from tools import (
+from .credentials import get_openai_api_key
+from .tools import (
     get_alarm_history,
     get_alarm_state,
     get_ecs_lifecycle_events,
-    get_metrics,
-    query_logs,
-    inspect_ecs_task,
     get_ecs_metrics,
     get_ecs_task_at_time,
-    )
+    get_metrics,
+    inspect_ecs_task,
+    query_logs,
+)
 
 
 SYSTEM_PROMPT = """
@@ -142,9 +143,11 @@ State what additional evidence would be required for validation.
 """
 
 
+
+
 model = OpenAIModel(
     client_args={
-        "api_key": os.environ["OPENAI_API_KEY"],
+        "api_key": get_openai_api_key(),
         "base_url": "https://bedrock-mantle.us-east-1.api.aws/v1",
     },
     model_id="zai.glm-5",
@@ -159,16 +162,37 @@ agent = Agent(
         get_alarm_history,
         get_metrics,
         query_logs,
-        inspect_ecs_task,get_ecs_lifecycle_events,
+        inspect_ecs_task,
+        get_ecs_lifecycle_events,
         get_ecs_metrics,
         get_ecs_task_at_time,
     ],
 )
 
 
-if __name__ == "__main__":
-    response = agent(
-        """
+def investigate(prompt: str) -> str:
+    """
+    Transport-independent Sentinel investigation entrypoint.
+
+    CLI, EventBridge, evaluation, and future transports should call
+    this function rather than invoking the Agent object directly.
+    """
+
+    response = agent(prompt)
+
+    try:
+        return response.message["content"][0]["text"]
+    except (
+        KeyError,
+        IndexError,
+        TypeError,
+    ) as exc:
+        raise RuntimeError(
+            "Sentinel returned an unexpected response format."
+        ) from exc
+
+
+CLI_INVESTIGATION_PROMPT = """
 Investigate the current Sentinel incident.
 
 Use get_alarm_history() first.
@@ -178,8 +202,7 @@ When get_alarm_history() returns a non-null selected_incident:
   for this investigation.
 - Do not replace it with another historical incident because another
   incident has a larger latency value or appears more severe.
-- Do not independently select a different incident from the returned
-  history.
+- Do not independently select a different incident from returned history.
 - Pass the selected incident timestamp to subsequent investigation tools.
 
 If selected_incident is null:
@@ -189,10 +212,8 @@ If selected_incident is null:
 For historical ECS investigation:
 - Call get_ecs_task_at_time() using the selected incident timestamp.
 - If it returns a candidate task ID, pass that task ID to get_ecs_metrics().
-- If it returns insufficient_evidence, do not substitute the current
+- If it returns insufficient evidence, do not substitute the current
   running task.
-
-
 
 Do not perform remediation.
 
@@ -200,6 +221,7 @@ After completing the tool investigation, produce exactly ONE final report.
 Do not repeat, restate, or regenerate the report.
 Do not include an analysis section before or after the report.
 Your response must end after the final conclusion.
+
 Report:
 
 1. Alarm state
@@ -228,7 +250,10 @@ Never call something the root cause unless the evidence establishes
 the causal mechanism.
 """
 
-    )
 
-    #print(response.message["content"][0]["text"])
-    
+if __name__ == "__main__":
+    print(
+        investigate(
+            CLI_INVESTIGATION_PROMPT
+        )
+    )

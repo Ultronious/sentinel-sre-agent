@@ -3416,3 +3416,24 @@ Final Learning Philosophy — Sentinel Edition
 > Build it. Break it. Investigate it. Explain it. Rebuild it.
 
 > The final objective is not to say "I used AWS." It is to explain why every component exists, how it fails, how it is secured, what it costs, and how to replace or rebuild it.
+
+### PowerShell + AWS CLI JSON
+
+PowerShell can mangle nested JSON passed directly to AWS CLI parameters,
+especially when quoting/escaping multiple nested arrays and objects.
+
+For non-trivial JSON arguments, prefer a JSON file:
+
+```powershell
+@'
+{
+  ...
+}
+'@ | Set-Content event-pattern.json
+
+aws events put-rule `
+  --name sentinel-high-latency-events `
+  --event-pattern file://event-pattern.json `
+  --state ENABLED `
+  --profile sentinel `
+  --region us-east-1

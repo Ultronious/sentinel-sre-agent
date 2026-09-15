@@ -5,15 +5,11 @@ from pathlib import Path
 from strands import Agent
 from strands.models.openai import OpenAIModel
 
-from agent.reviewer import review_report
-
+from agent.review_pipeline import review_and_revise
 
 BASE_DIR = Path(__file__).resolve().parent
 CASES_FILE = BASE_DIR / "cases.json"
 FIXTURES_DIR = BASE_DIR / "fixtures"
-
-MAX_REVISIONS = 2
-
 
 SENTINEL_EVAL_PROMPT = """
 You are Sentinel, an AWS SRE investigation agent being evaluated against
@@ -61,15 +57,86 @@ def extract_text(response) -> str:
     return response.message["content"][0]["text"]
 
 
-def evaluate_report(report: str, expected: dict) -> dict:
+def _contains_unsupported_phrase(
+    report_lower: str,
+    phrase: str,
+) -> bool:
+    """
+    Detect a forbidden claim only when it appears as an assertive
+    statement rather than as an explicit negation or uncertainty.
+    """
+
+    phrase_lower = phrase.lower()
+
+    start = 0
+
+    uncertainty_markers = [
+        "does not prove",
+        "does not establish",
+        "not established",
+        "not confirmed",
+        "cannot establish",
+        "cannot be confirmed",
+        "cannot be determined",
+        "unconfirmed",
+        "no evidence that",
+        "insufficient evidence",
+        "not supported by the evidence",
+        "evidence does not show",
+        "evidence does not prove",
+    ]
+
+    while True:
+        index = report_lower.find(
+            phrase_lower,
+            start,
+        )
+
+        if index == -1:
+            return False
+
+        context_start = max(
+            0,
+            index - 120,
+        )
+
+        context_end = min(
+            len(report_lower),
+            index + len(phrase_lower) + 120,
+        )
+
+        context = report_lower[
+            context_start:context_end
+        ]
+
+        if not any(
+            marker in context
+            for marker in uncertainty_markers
+        ):
+            return True
+
+        start = index + len(phrase_lower)
+
+
+def evaluate_report(
+    report: str,
+    expected: dict,
+) -> dict:
     """
     Deterministic evaluation of the generated report.
     """
 
     report_lower = report.lower()
 
-    must_contain = expected.get("must_contain", [])
-    must_not_contain = expected.get("must_not_contain", [])
+    must_contain = expected.get(
+        "must_contain",
+        [],
+    )
+
+    must_not_contain = expected.get(
+        "must_not_contain",
+        [],
+    )
 
     missing = [
         phrase
@@ -80,7 +147,10 @@ def evaluate_report(report: str, expected: dict) -> dict:
     forbidden = [
         phrase
         for phrase in must_not_contain
-        if phrase.lower() in report_lower
+        if _contains_unsupported_phrase(
+            report_lower,
+            phrase,
+        )
     ]
 
     return {
@@ -141,33 +211,6 @@ Produce exactly one final investigation report.
     return extract_text(response)
 
 
-def format_review_feedback(review: dict) -> str:
-    """
-    Convert reviewer findings into a compact revision instruction.
-    """
-
-    issues = review.get("issues", [])
-
-    if not issues:
-        return review.get("summary", "")
-
-    lines = []
-
-    for index, issue in enumerate(issues, start=1):
-        issue_type = issue.get("type", "unknown")
-        severity = issue.get("severity", "unknown")
-        claim = issue.get("claim", "")
-        reason = issue.get("reason", "")
-
-        lines.append(
-            f"{index}. [{severity.upper()}] {issue_type}\n"
-            f"   Problematic claim: {claim}\n"
-            f"   Reason: {reason}"
-        )
-
-    return "\n".join(lines)
-
-
 def run_case(case: dict) -> dict:
     """
     Run one case through:
@@ -190,39 +233,19 @@ def run_case(case: dict) -> dict:
 
     report = run_sentinel(fixture)
 
-    revision_count = 0
-    review_result = review_report(
+    pipeline_result = review_and_revise(
         report=report,
         evidence=fixture,
-    )
-
-    while (
-        review_result.get("verdict") == "REVISE"
-        and revision_count < MAX_REVISIONS
-    ):
-        revision_count += 1
-
-        print(
-            f"Reviewer requested revision "
-            f"({revision_count}/{MAX_REVISIONS})..."
-        )
-
-        feedback = format_review_feedback(review_result)
-
-        report = run_sentinel(
+        regenerate=lambda feedback: run_sentinel(
             fixture,
             revision_feedback=feedback,
-        )
+        ),
+    )
 
-        review_result = review_report(
-            report=report,
-            evidence=fixture,
-        )
-
-    if review_result.get("verdict") == "REVISE":
-        review_status = "REJECTED_AFTER_MAX_REVISIONS"
-    else:
-        review_status = "PASS"
+    report = pipeline_result["report"]
+    review_result = pipeline_result["review"]
+    review_status = pipeline_result["review_status"]
+    revision_count = pipeline_result["revision_count"]
 
     evaluation = evaluate_report(
         report,

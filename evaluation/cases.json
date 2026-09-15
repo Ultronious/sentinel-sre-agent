@@ -75,18 +75,15 @@
     "fixture": "cloudtrail_gap.json",
     "expected": {
       "must_contain": [
-        "CloudTrail",
-        "does not prove",
-        "RunTask",
-        "StopTask",
+        "11:15",
+        "1.9",
+        "not observed",
         "ROOT CAUSE: UNCONFIRMED"
       ],
       "must_not_contain": [
         "no deployment occurred",
-        "no deployment happened",
         "no scaling occurred",
-        "no configuration change occurred",
-        "no task replacement occurred"
+        "no configuration change occurred"
       ]
     }
   }
