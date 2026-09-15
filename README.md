@@ -144,4 +144,3 @@ The goal was not to hide those boundaries, but to make them explicit and testabl
 
 ---
 
-Built for the **Agents for Humans Hackathon**.
