@@ -117,7 +117,7 @@ sentinel-sre-agent/
 ├── app/
 ├── docs/
 │   ├── aws-field-notes.md
-│   └── sentinel-architecture.png
+│   └── sentinel-architecture.jpeg
 └── README.md
 ```
 
