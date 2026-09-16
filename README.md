@@ -35,7 +35,7 @@ When evidence is insufficient, Sentinel reports:
 
 ## Architecture
 
-![Sentinel architecture](docs/sentinel-architecture.png)
+![Sentinel architecture](docs/sentinel-architecture.jpeg)
 
 The event-driven AWS deployment path is:
 
