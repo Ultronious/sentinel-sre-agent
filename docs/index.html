@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sentinel — Evidence-Driven AWS SRE Agent</title>
+  <meta name="description" content="Interactive, credential-free demo of Sentinel, an evidence-driven AWS SRE investigation agent." />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">S</div>
+      <div>
+        <div class="brand-name">SENTINEL</div>
+        <div class="brand-sub">Evidence-Driven AWS SRE Agent</div>
+      </div>
+    </div>
+    <div class="status-pill"><span class="dot"></span> DEMO MODE · NO AWS CREDENTIALS</div>
+  </header>
+
+  <main class="shell">
+    <section class="hero">
+      <div>
+        <div class="eyebrow">INVESTIGATE · CORRELATE · EXPLAIN · DON'T GUESS</div>
+        <h1>Incident investigation, without pretending uncertainty is certainty.</h1>
+        <p>Sentinel correlates alarm, metric, telemetry, ECS, and CloudTrail evidence, then separates observed facts from hypotheses and unknowns.</p>
+      </div>
+      <div class="score-card">
+        <div class="score-label">FINAL EVALUATION</div>
+        <div class="score-main">5/5</div>
+        <div class="score-row"><span>Report scenarios</span><strong>100%</strong></div>
+        <div class="score-row"><span>Reviewer convergence</span><strong>5/5</strong></div>
+      </div>
+    </section>
+
+    <section class="grid-layout">
+      <aside class="panel scenario-panel">
+        <div class="panel-title">INCIDENT SCENARIOS</div>
+        <div id="scenario-list"></div>
+        <div class="panel-note">All reports below are pre-generated evaluation evidence. The public demo performs no AWS calls.</div>
+      </aside>
+
+      <section class="panel report-panel">
+        <div class="report-head">
+          <div>
+            <div class="panel-title">INVESTIGATION REPORT</div>
+            <h2 id="report-title">single_slow_request</h2>
+          </div>
+          <div class="verdict">PASS</div>
+        </div>
+
+        <div class="incident-bar" id="incident-bar"></div>
+
+        <div class="report-sections">
+          <section>
+            <h3>Observed evidence</h3>
+            <div id="evidence" class="cards"></div>
+          </section>
+
+          <section>
+            <h3>Correlations</h3>
+            <ul id="correlations"></ul>
+          </section>
+
+          <section>
+            <h3>Hypotheses · unconfirmed</h3>
+            <ul id="hypotheses"></ul>
+          </section>
+
+          <section>
+            <h3>Evidence gaps / unknowns</h3>
+            <ul id="unknowns"></ul>
+          </section>
+        </div>
+
+        <div class="root-cause">
+          <div class="root-label">ROOT CAUSE DETERMINATION</div>
+          <div class="root-value">UNCONFIRMED</div>
+          <p id="root-explanation"></p>
+        </div>
+      </section>
+    </section>
+
+    <section class="architecture panel">
+      <div class="panel-title">EVENT-DRIVEN AWS PATH</div>
+      <div class="flow">
+        <span>CloudWatch Alarm</span><b>→</b><span>EventBridge</span><b>→</b><span>Lambda</span><b>→</b><span>Sentinel</span><b>→</b><span>AWS Evidence</span><b>→</b><span>Investigation Report</span>
+      </div>
+      <img src="sentinel-architecture.png" alt="Sentinel architecture diagram" />
+    </section>
+
+    <section class="footer-grid">
+      <div class="panel principle">
+        <div class="panel-title">CORE DESIGN RULE</div>
+        <p>Temporal or quantitative correlation does <strong>not</strong> automatically establish causation.</p>
+      </div>
+      <div class="panel links">
+        <div class="panel-title">PROJECT EVIDENCE</div>
+        <a href="evaluation/sentinel-evaluation-final.txt">Raw final evaluation</a>
+        <a href="https://github.com/Ultronious/sentinel-sre-agent" target="_blank" rel="noreferrer">GitHub repository ↗</a>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
